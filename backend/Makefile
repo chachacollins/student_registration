@@ -1,11 +1,23 @@
 CXX=g++
-CXXFLAGS=-Wall -Wextra -std=c++20 -ggdb
-INPUT_FILES=src/main.cpp
+CXXFLAGS=-Wall -Wextra -std=c++20 -ggdb 
+LIBFLAGS=-lpqxx -lsodium
+SRCS=$(wildcard src/*.cpp) $(wildcard src/routes/*.cpp)
+OBJS=$(patsubst src/%.cpp, build/%.o, $(SRCS))
 TARGET=build/backend
+PCH=build/pch.hpp.gch
 
-$(TARGET): $(INPUT_FILES)
+build: $(TARGET)
+$(PCH): src/pch.hpp
 	mkdir -p build
-	$(CXX) $(CXXFLAGS) $(INPUT_FILES) -o $(TARGET)
+	$(CXX) $(CXXFLAGS) -x c++-header $< -o $@
+
+build/%.o: src/%.cpp $(PCH)
+	mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -include build/pch.hpp -c $< -o $@
+
+$(TARGET): $(OBJS)
+	mkdir -p build
+	$(CXX) $(CXXFLAGS) $(OBJS) -o $(TARGET) $(LIBFLAGS) 
 
 serve: $(TARGET)
 	./$(TARGET)
@@ -13,4 +25,4 @@ serve: $(TARGET)
 clean:
 	rm -rf build
 
-.PHONY: serve clean
+.PHONY: serve clean build

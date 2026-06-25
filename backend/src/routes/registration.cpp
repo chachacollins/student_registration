@@ -1,0 +1,95 @@
+#include "registration.hpp"
+
+using json = nlohmann::json;
+
+struct FieldRule
+{
+    std::string name;
+    json::value_t type;
+};
+
+std::optional<crow::response> validate_json_body(
+    const crow::request& req,
+    json& out,
+    const std::vector<FieldRule>& rules
+)
+{
+    if (req.body.empty())
+        return crow::response(400, json{{"error", "request body is empty"}}.dump());
+
+    try
+    {
+        out = json::parse(req.body);
+    }
+    catch (const json::parse_error& e)
+    {
+        return crow::response(400, json{{"error", e.what()}}.dump());
+    }
+
+    for (const auto& rule : rules) 
+    {
+        if (!out.contains(rule.name))
+            return crow::response(400, json{{"error", "missing field: " + rule.name}}.dump());
+        if (out[rule.name].type() != rule.type)
+            return crow::response(400, json{{"error", "invalid type for field: " + rule.name}}.dump());
+        if (rule.type == json::value_t::string && out[rule.name].get<std::string>().empty())
+            return crow::response(400, json{{"error", "field cannot be empty: " + rule.name}}.dump());
+    }
+
+    return std::nullopt;
+}
+
+namespace routes
+{
+    crow::response register_user(pqxx::connection& cx, const crow::request& req)
+    {
+        json body;
+        auto err = validate_json_body(req, body, {
+                        {"student_id", json::value_t::string},
+                        {"first_name", json::value_t::string},
+                        {"last_name",  json::value_t::string},
+                        {"email",      json::value_t::string},
+                        {"password",   json::value_t::string},
+                        {"year_of_study", json::value_t::number_unsigned},
+                    });
+        if (err) return std::move(err.value());
+        pqxx::work tx{cx};
+        char password_hash[crypto_pwhash_STRBYTES];
+        std::string password = body["password"].get<std::string>();
+        if (crypto_pwhash_str(password_hash, password.c_str(), password.size(),
+                    crypto_pwhash_OPSLIMIT_INTERACTIVE,
+                    crypto_pwhash_MEMLIMIT_INTERACTIVE) != 0)
+            return crow::response(503, json{{"error", "Server out of resources"}}.dump());
+        try
+        {
+            tx.exec(
+                "INSERT INTO students "
+                "(student_id, first_name, last_name, email, password_hash, year_of_study) "
+                "VALUES ($1, $2, $3, $4, $5, $6)",
+                pqxx::params{
+                    body["student_id"].get<std::string>(),
+                    body["first_name"].get<std::string>(),
+                    body["last_name"].get<std::string>(),
+                    body["email"].get<std::string>(),
+                    password_hash,
+                    body["year_of_study"].get<int>()
+                }
+            );
+            tx.commit();
+        }
+        catch (pqxx::unique_violation const &e)
+        {
+            return crow::response(409, json{{"error", "Student already exists"}}.dump());
+        }
+        catch (pqxx::failure const &e)
+        {
+            std::cerr << "SQL error: " << e.what() << '\n';
+            return crow::response(500, json{{"error", "Internal Server Error"}}.dump());
+        }
+        catch (std::exception const &e)
+        {
+            return crow::response(409, json{{"error", e.what()}}.dump());
+        }
+        return crow::response(201, json{{"success", true}}.dump());
+    }
+}
