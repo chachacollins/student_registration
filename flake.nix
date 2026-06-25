@@ -26,9 +26,10 @@
               crow
               nlohmann_json
               libpqxx
+              libsodium
             ];
 
-            shellHook = "";
+            shellHook = "unset TEMP TMP TEMPDIR TMPDIR";
           };
         });
     };
