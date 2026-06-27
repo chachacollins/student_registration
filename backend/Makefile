@@ -1,7 +1,7 @@
 CXX=g++
-CXXFLAGS=-Wall -Wextra -std=c++20 -ggdb 
+CXXFLAGS=-Wall -Wextra -std=c++20 -ggdb -Isrc
 LIBFLAGS=-lpqxx -lsodium
-SRCS=$(wildcard src/*.cpp) $(wildcard src/routes/*.cpp)
+SRCS=$(wildcard src/*.cpp) $(wildcard src/routes/*.cpp) $(wildcard src/utils/*.cpp)
 OBJS=$(patsubst src/%.cpp, build/%.o, $(SRCS))
 TARGET=build/backend
 PCH=build/pch.hpp.gch
