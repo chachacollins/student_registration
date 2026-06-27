@@ -26,6 +26,7 @@
               crow
               nlohmann_json
               libpqxx
+              openssl
               libsodium
             ];
 

@@ -1,5 +1,6 @@
 #pragma once
 #include "crow.h"
+#include <jwt-cpp/jwt.h>
 #include <nlohmann/json.hpp>
 #include <optional>
 #include <pqxx/pqxx>

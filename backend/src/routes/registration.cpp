@@ -1,8 +1,6 @@
 #include "registration.hpp"
 #include "utils/utils.hpp"
 
-using json = nlohmann::json;
-
 namespace routes
 {
     crow::response register_user(pqxx::connection& cx, const crow::request& req)

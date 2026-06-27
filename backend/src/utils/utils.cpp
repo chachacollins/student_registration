@@ -30,4 +30,14 @@ namespace utils
         }
         return std::nullopt;
     }
+
+    std::string jwt_create(const std::string_view& str)
+    {
+        auto token = jwt::create()
+                         .set_issuer("auth0")
+                         .set_type("JWS")
+                         .set_payload_claim("student_id", jwt::claim(std::string(str)))
+                         .sign(jwt::algorithm::hs256{"secret"});
+        return token;
+    }
 }

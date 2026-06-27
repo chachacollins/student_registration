@@ -1,8 +1,8 @@
 #pragma once
+using json = nlohmann::json;
 namespace utils
 {
 
-    using json = nlohmann::json;
     struct FieldRule
     {
         std::string name;
@@ -14,4 +14,16 @@ namespace utils
             json& out,
             const std::vector<FieldRule>& rules
      );
+
+     //TODO: replace `secret` with an actual secret
+    template <typename T>
+    void jwt_verify(const jwt::decoded_jwt<T>& decoded_token)
+    {
+         auto verifier = jwt::verify()
+                             .with_issuer("auth0")
+                             .allow_algorithm(jwt::algorithm::hs256{"secret"});
+         verifier.verify(decoded_token);
+    }
+
+    std::string jwt_create(const std::string_view& str);
 }
