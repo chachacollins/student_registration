@@ -10,6 +10,42 @@ static std::string get_student_id(const crow::request& req)
 
 namespace routes
 {
+    crow::response get_course_by_id(pqxx::connection& cx, std::string course_id)
+    {
+        pqxx::work tx{cx};
+        try
+        {
+            pqxx::result rows{tx.exec("SELECT * FROM courses WHERE course_id = $1", pqxx::params{course_id})};
+            if (rows.empty())
+            {
+                return crow::response(404, json{{"error", "Course not found"}}.dump());
+            }
+            json course;
+            course["course_id"]      = rows[0]["course_id"].as<std::string>();
+            course["dept_code"]      = rows[0]["dept_code"].as<std::string>();
+            course["course_name"]    = rows[0]["course_name"].as<std::string>();
+            course["description"]    = rows[0]["description"].is_null() ? "" : rows[0]["description"].as<std::string>();
+            course["capacity"]       = rows[0]["capacity"].as<int>();
+            course["enrolled_count"] = rows[0]["enrolled_count"].as<int>();
+            course["semester"]       = rows[0]["semester"].as<std::string>();
+            course["day_of_week"]    = rows[0]["day_of_week"].as<std::string>();
+            course["start_time"]     = rows[0]["start_time"].as<std::string>();
+            course["end_time"]       = rows[0]["end_time"].as<std::string>();
+            course["room"]           = rows[0]["room"].is_null() ? "" : rows[0]["room"].as<std::string>();
+            course["is_active"]      = rows[0]["is_active"].as<bool>();
+            return crow::response(200, json{course}.dump());
+        }
+        catch (pqxx::failure const &e)
+        {
+            std::cerr << "SQL error: " << e.what() << '\n';
+            return crow::response(500, json{{"error", "Internal Server Error"}}.dump());
+        }
+        catch (std::exception const &e)
+        {
+            return crow::response(409, json{{"error", e.what()}}.dump());
+        }
+    }
+
     crow::response get_courses(pqxx::connection& cx, const crow::request& req)
     {
         auto student_id = get_student_id(req);
@@ -80,6 +116,31 @@ namespace routes
             tx.exec("INSERT INTO registrations (student_id, course_id) VALUES ($1, $2)", pqxx::params{student_id, course_id});
             tx.commit();
             return crow::response(201, json{{"success", true}}.dump());
+        }
+        catch (pqxx::unique_violation const &e)
+        {
+            return crow::response(409, json{{"error", "Course already registered"}}.dump());
+        }
+        catch (pqxx::failure const &e)
+        {
+            std::cerr << "SQL error: " << e.what() << '\n';
+            return crow::response(500, json{{"error", "Internal Server Error"}}.dump());
+        }
+        catch (std::exception const &e)
+        {
+            return crow::response(409, json{{"error", e.what()}}.dump());
+        }
+    }
+
+    crow::response drop_course(pqxx::connection& cx, const crow::request& req, std::string course_id)
+    {
+        auto student_id = get_student_id(req);
+        pqxx::work tx{cx};
+        try
+        {
+            tx.exec("DELETE FROM registrations WHERE student_id = $1 AND course_id = $2", pqxx::params{student_id, course_id});
+            tx.commit();
+            return crow::response(200, json{{"success", true}}.dump());
         }
         catch (pqxx::failure const &e)
         {

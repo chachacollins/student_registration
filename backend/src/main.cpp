@@ -83,6 +83,20 @@ int main()
         return routes::register_course(cx, req, course_id);
     });
 
+    CROW_ROUTE(app, "/courses/<string>/drop")
+    .CROW_MIDDLEWARES(app, JWTMiddleWare)
+    .methods("POST"_method)
+    ([&](const crow::request& req, std::string course_id) {
+        return routes::drop_course(cx, req, course_id);
+    });
+
+    CROW_ROUTE(app, "/courses/<string>")
+    .CROW_MIDDLEWARES(app, JWTMiddleWare)
+    .methods("GET"_method)
+    ([&](const crow::request& req, std::string course_id) {
+        return routes::get_course_by_id(cx, course_id);
+    });
+
     app.port(1234).multithreaded().run();
 
 }
