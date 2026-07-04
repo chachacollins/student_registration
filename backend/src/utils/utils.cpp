@@ -40,4 +40,11 @@ namespace utils
                          .sign(jwt::algorithm::hs256{"secret"});
         return token;
     }
+
+    std::vector<std::string_view> split_string(const std::string& s1, const std::string& del)
+    {
+        return std::views::split(s1, del)
+            | std::views::transform([](const auto& x) { return std::string_view{x.begin(), x.end()};})
+            | std::ranges::to<std::vector<std::string_view>>();
+    }
 }
