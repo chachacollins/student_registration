@@ -26,4 +26,6 @@ namespace utils
     }
 
     std::string jwt_create(const std::string_view& str);
+
+    std::vector<std::string_view> split_string(const std::string& s1, const std::string& del);
 }

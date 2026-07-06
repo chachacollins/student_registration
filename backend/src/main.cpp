@@ -1,3 +1,4 @@
+#include "routes/courses.hpp"
 #include "routes/login.hpp"
 #include "routes/registration.hpp"
 #include "utils/utils.hpp"
@@ -68,5 +69,41 @@ int main()
         return routes::login(cx, req);
     });
 
+    CROW_ROUTE(app, "/courses/registered")
+    .CROW_MIDDLEWARES(app, JWTMiddleWare)
+    .methods("GET"_method)
+    ([&](const crow::request& req) {
+        return routes::get_registered_courses(cx, req);
+    });
+
+    CROW_ROUTE(app, "/courses")
+    .CROW_MIDDLEWARES(app, JWTMiddleWare)
+    .methods("GET"_method)
+    ([&](const crow::request& req) {
+        return routes::get_courses(cx, req);
+    });
+
+    CROW_ROUTE(app, "/courses/<string>/register")
+    .CROW_MIDDLEWARES(app, JWTMiddleWare)
+    .methods("POST"_method)
+    ([&](const crow::request& req, std::string course_id) {
+        return routes::register_course(cx, req, course_id);
+    });
+
+    CROW_ROUTE(app, "/courses/<string>/drop")
+    .CROW_MIDDLEWARES(app, JWTMiddleWare)
+    .methods("POST"_method)
+    ([&](const crow::request& req, std::string course_id) {
+        return routes::drop_course(cx, req, course_id);
+    });
+
+    CROW_ROUTE(app, "/courses/<string>")
+    .CROW_MIDDLEWARES(app, JWTMiddleWare)
+    .methods("GET"_method)
+    ([&](const crow::request&, std::string course_id) {
+        return routes::get_course_by_id(cx, course_id);
+    });
+
     app.port(1234).multithreaded().run();
+
 }

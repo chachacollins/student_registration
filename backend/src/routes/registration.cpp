@@ -1,5 +1,4 @@
 #include "registration.hpp"
-#include "utils/utils.hpp"
 
 namespace routes
 {
