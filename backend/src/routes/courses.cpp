@@ -152,4 +152,50 @@ namespace routes
             return crow::response(409, json{{"error", e.what()}}.dump());
         }
     }
+
+    crow::response get_registered_courses(pqxx::connection& cx, const crow::request& req)
+    {
+        auto student_id = get_student_id(req);
+        pqxx::work tx{cx};
+        std::vector<json> courses;
+        try
+        {
+            pqxx::result rows{tx.exec(
+                "SELECT c.*, r.registered_at, r.status "
+                "FROM registrations r "
+                "JOIN courses c ON r.course_id = c.course_id "
+                "WHERE r.student_id = $1",
+                pqxx::params{student_id}
+            )};
+            for (const auto& row : rows)
+            {
+                json course;
+                course["course_id"]      = row["course_id"].as<std::string>();
+                course["dept_code"]      = row["dept_code"].as<std::string>();
+                course["course_name"]    = row["course_name"].as<std::string>();
+                course["description"]    = row["description"].is_null() ? "" : row["description"].as<std::string>();
+                course["capacity"]       = row["capacity"].as<int>();
+                course["enrolled_count"] = row["enrolled_count"].as<int>();
+                course["semester"]       = row["semester"].as<std::string>();
+                course["day_of_week"]    = row["day_of_week"].as<std::string>();
+                course["start_time"]     = row["start_time"].as<std::string>();
+                course["end_time"]       = row["end_time"].as<std::string>();
+                course["room"]           = row["room"].is_null() ? "" : row["room"].as<std::string>();
+                course["is_active"]      = row["is_active"].as<bool>();
+                course["registered_at"]  = row["registered_at"].as<std::string>();
+                course["status"]         = row["status"].as<std::string>();
+                courses.emplace_back(course);
+            }
+            return crow::response(200, json{courses}.dump());
+        }
+        catch (pqxx::failure const &e)
+        {
+            std::cerr << "SQL error: " << e.what() << '\n';
+            return crow::response(500, json{{"error", "Internal Server Error"}}.dump());
+        }
+        catch (std::exception const &e)
+        {
+            return crow::response(409, json{{"error", e.what()}}.dump());
+        }
+    }
 }
