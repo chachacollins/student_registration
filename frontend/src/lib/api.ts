@@ -1,26 +1,33 @@
 export interface Course {
 	course_id: string;
+	dept_code: string;
 	course_name: string;
 	description: string;
-	color: string;
-	units?: Unit[];
-}
-
-export interface Unit {
-	unit_id: string;
-	unit_name: string;
-	unit_code: string;
+	capacity: number;
+	enrolled_count: number;
+	semester: string;
+	day_of_week: string;
+	start_time: string;
+	end_time: string;
+	room: string;
+	is_active: boolean;
 }
 
 export interface Registration {
 	course_id: string;
+	dept_code: string;
 	course_name: string;
 	description: string;
-	color: string;
+	capacity: number;
+	enrolled_count: number;
+	semester: string;
+	day_of_week: string;
+	start_time: string;
+	end_time: string;
+	room: string;
+	is_active: boolean;
+	registered_at: string;
 	status: string;
-	progress: number;
-	units_done: number;
-	units_total: number;
 }
 
 const API_BASE = 'http://localhost:1234';
@@ -61,6 +68,18 @@ async function request(path: string, options: RequestInit = {}): Promise<Respons
 	return fetch(`${API_BASE}${path}`, { ...options, headers });
 }
 
+function decodeJwtPayload(token: string): Record<string, unknown> {
+	try {
+		const parts = token.split('.');
+		if (parts.length !== 3) return {};
+		const payload = parts[1];
+		const decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+		return JSON.parse(decoded);
+	} catch {
+		return {};
+	}
+}
+
 export async function login(email: string, password: string) {
 	return request('/login', {
 		method: 'POST',
@@ -91,18 +110,11 @@ export async function getCourse(courseId: string) {
 }
 
 export async function registerForCourse(courseId: string) {
-	return request('/courses/register', {
-		method: 'POST',
-		body: JSON.stringify({ course_id: courseId })
+	return request(`/courses/${courseId}/register`, {
+		method: 'POST'
 	});
 }
 
 export async function getRegisteredCourses() {
 	return request('/courses/registered');
-}
-
-export async function markUnitDone(courseId: string, unitId: string) {
-	return request(`/courses/${courseId}/units/${unitId}/done`, {
-		method: 'POST'
-	});
 }

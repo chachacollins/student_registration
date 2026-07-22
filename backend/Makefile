@@ -1,5 +1,5 @@
 CXX=g++
-CXXFLAGS=-Wall -Wextra -std=c++23 -ggdb -Isrc -Ivendor
+CXXFLAGS=-Wall -Wextra -std=c++23 -ggdb -Isrc -Ivendor -Iinclude
 LIBFLAGS=-lpqxx -lsodium -lssl -lcrypto
 SRCS=$(wildcard src/*.cpp) $(wildcard src/routes/*.cpp) $(wildcard src/utils/*.cpp)
 OBJS=$(patsubst src/%.cpp, build/%.o, $(SRCS))

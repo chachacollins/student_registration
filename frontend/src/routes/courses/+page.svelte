@@ -52,13 +52,10 @@
 			return courses.filter((c) => !registeredMap[c.course_id]);
 		}
 		if (filter === 'registered') {
-			return courses.filter((c) => registeredMap[c.course_id]?.status === 'registered');
+			return courses.filter((c) => registeredMap[c.course_id]?.status === 'active');
 		}
 		if (filter === 'dropped') {
 			return courses.filter((c) => registeredMap[c.course_id]?.status === 'dropped');
-		}
-		if (filter === 'completed') {
-			return courses.filter((c) => registeredMap[c.course_id]?.status === 'completed');
 		}
 		return courses;
 	});
@@ -75,9 +72,8 @@
 
 	function statusBadge(status: string) {
 		const colors: Record<string, string> = {
-			registered: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-			dropped: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-			completed: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+			active: 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
+			dropped: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
 		};
 		return colors[status] || '';
 	}
@@ -91,7 +87,7 @@
 
 	<div class="mb-6 flex flex-wrap items-center gap-3">
 		<span class="text-sm font-medium text-gray-600 dark:text-gray-400">Filter by:</span>
-		{#each ['available', 'registered', 'dropped', 'completed'] as f (f)}
+		{#each ['available', 'registered', 'dropped'] as f (f)}
 			<button
 				onclick={() => (filter = f)}
 				class="cursor-pointer rounded-full px-4 py-1.5 text-sm font-medium transition-colors {filter ===
@@ -119,7 +115,6 @@
 			{#each filteredCourses as course (course.course_id)}
 				<div
 					class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md dark:border-white/10 dark:bg-gray-900"
-					style="border-left: 4px solid {course.color || '#3B82F6'}"
 				>
 					<div class="mb-3 flex items-start justify-between">
 						<div>
@@ -142,20 +137,6 @@
 					</p>
 
 					{#if registeredMap[course.course_id]}
-						<div class="mb-3">
-							<div
-								class="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400"
-							>
-								<span>Progress</span>
-								<span>{Math.round(registeredMap[course.course_id].progress)}%</span>
-							</div>
-							<div class="mt-1 h-2 w-full rounded-full bg-gray-200 dark:bg-white/10">
-								<div
-									class="h-2 rounded-full bg-indigo-600 transition-all"
-									style="width: {Math.round(registeredMap[course.course_id].progress)}%"
-								></div>
-							</div>
-						</div>
 						<a
 							href={'/courses/' + course.course_id}
 							class="inline-block text-sm font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400"

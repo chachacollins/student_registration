@@ -7,6 +7,17 @@
 	let error = $state('');
 	let loading = $state(false);
 
+	function decodeJwtPayload(token: string): Record<string, unknown> {
+		try {
+			const parts = token.split('.');
+			if (parts.length !== 3) return {};
+			const decoded = atob(parts[1].replace(/-/g, '+').replace(/_/g, '/'));
+			return JSON.parse(decoded);
+		} catch {
+			return {};
+		}
+	}
+
 	async function handleLogin(e: Event) {
 		e.preventDefault();
 		error = '';
@@ -18,7 +29,9 @@
 				error = data.error || 'Login failed';
 				return;
 			}
-			setAuth(data.token, email);
+			const payload = decodeJwtPayload(data.token);
+			const studentId = (payload.student_id as string) || email;
+			setAuth(data.token, studentId);
 			goto('/courses');
 		} catch {
 			error = 'Could not connect to server';
